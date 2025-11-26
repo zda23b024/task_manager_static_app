@@ -4,71 +4,68 @@ let currentFilter = 'all';
 
 // DOM Elements
 const taskInput = document.getElementById('taskInput');
-const addBtn = document.getElementById('addBtn');
 const taskList = document.getElementById('taskList');
 const filterBtns = document.querySelectorAll('.filter-btn');
 
 // Initialize app
 function init() {
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.filter;
+            renderTasks();
+        });
+    });
+
     renderTasks();
     updateStats();
 }
 
 // Add new task
 function addTask() {
-    debugger;
     const text = taskInput.value.trim();
-    if (text === '') {
-        alert('Please enter a task!');
-        return;
-    }
-    
-    const task = {
+    if (text === '') return alert('Please enter a task!');
+
+    tasks.push({
         id: Date.now(),
-        text: text,
-        completed: false,
-        createdAt: new Date().toISOString()
-    };
-    
-    tasks.push(task);
+        text,
+        completed: false
+    });
+
     saveTasks();
     taskInput.value = '';
     renderTasks();
     updateStats();
 }
 
-// Save tasks to localStorage
+// Save to localStorage
 function saveTasks() {
     localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
-// Render tasks based on current filter
+// Render tasks
 function renderTasks() {
-    let filteredTasks = tasks;
-    
-    if (currentFilter === 'active') {
-        filteredTasks = tasks.filter(task => !task.completed);
-    } else if (currentFilter === 'completed') {
-        filteredTasks = tasks.filter(task => task.completed);
-    }
-    
+    let filtered = tasks;
+    if (currentFilter === 'active') filtered = tasks.filter(t => !t.completed);
+    if (currentFilter === 'completed') filtered = tasks.filter(t => t.completed);
+
     taskList.innerHTML = '';
-    
-    filteredTasks.forEach(task => {
+
+    filtered.forEach(task => {
         const li = document.createElement('li');
         li.className = 'task-item';
         li.innerHTML = `
-            <input type="checkbox" ${task.completed ? 'checked' : ''} 
-                   onchange="toggleTask(${task.id})">
+            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
             <span class="${task.completed ? 'completed' : ''}">${task.text}</span>
-            <button class="edit-btn" onclick="editTask(${task.id})">Edit</button>
-            <button class="delete-btn" onclick="deleteTask(${task.id})">Delete</button>
+            <button onclick="editTask(${task.id})">Edit</button>
+            <button onclick="deleteTask(${task.id})">Delete</button>
         `;
         taskList.appendChild(li);
     });
 }
 
-// Toggle task completion
+// Toggle task
 function toggleTask(id) {
     const task = tasks.find(t => t.id === id);
     task.completed = !task.completed;
@@ -84,3 +81,23 @@ function deleteTask(id) {
     renderTasks();
     updateStats();
 }
+
+// EDIT TASK (missing in your code)
+function editTask(id) {
+    const task = tasks.find(t => t.id === id);
+    const newText = prompt("Edit task:", task.text);
+    if (newText !== null && newText.trim() !== "") {
+        task.text = newText.trim();
+        saveTasks();
+        renderTasks();
+    }
+}
+
+// Stats
+function updateStats() {
+    document.getElementById('totalTasks').textContent = `${tasks.length} tasks`;
+    document.getElementById('completedTasks').textContent =
+        `${tasks.filter(t => t.completed).length} completed`;
+}
+
+init();
